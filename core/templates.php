@@ -5,7 +5,7 @@ $indexfile = <<<'EOT'
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>{APP_NAME}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <script src="https://kit.fontawesome.com/6b773fe9e4.js" crossorigin="anonymous"></script>
     <style type="text/css">
@@ -20,6 +20,7 @@ $indexfile = <<<'EOT'
         }
     </style>
 </head>
+<?php require_once('navbar.php'); ?>
 <body>
     <section class="pt-5">
         <div class="container-fluid">
@@ -44,6 +45,7 @@ $indexfile = <<<'EOT'
                     <?php
                     // Include config file
                     require_once "config.php";
+                    require_once "helpers.php";
 
                     //Get current URL and parameters for correct pagination
                     $protocol = $_SERVER['SERVER_PROTOCOL'];
@@ -68,9 +70,9 @@ $indexfile = <<<'EOT'
                     $result = mysqli_query($link,$total_pages_sql);
                     $total_rows = mysqli_fetch_array($result)[0];
                     $total_pages = ceil($total_rows / $no_of_records_per_page);
-                    
+
                     //Column sorting on column name
-                    $orderBy = array('{COLUMNS}'); 
+                    $orderBy = array('{COLUMNS}');
                     $order = '{COLUMN_ID}';
                     if (isset($_GET['order']) && in_array($_GET['order'], $orderBy)) {
                             $order = $_GET['order'];
@@ -78,29 +80,29 @@ $indexfile = <<<'EOT'
 
                     //Column sort order
                     $sortBy = array('asc', 'desc'); $sort = 'desc';
-                    if (isset($_GET['sort']) && in_array($_GET['sort'], $sortBy)) {                                                                    
-                          if($_GET['sort']=='asc') {                                                                                                                            
+                    if (isset($_GET['sort']) && in_array($_GET['sort'], $sortBy)) {
+                          if($_GET['sort']=='asc') {
                             $sort='desc';
-                            }                                                                                   
+                            }
                     else {
                         $sort='asc';
-                        }                                                                                                                           
+                        }
                     }
 
                     // Attempt select query execution
                     $sql = "{INDEX_QUERY} ORDER BY $order $sort LIMIT $offset, $no_of_records_per_page";
                     $count_pages = "{INDEX_QUERY}";
 
-                    
+
                     if(!empty($_GET['search'])) {
                         $search = ($_GET['search']);
                         $sql = "SELECT * FROM {TABLE_NAME}
-                            WHERE CONCAT ({INDEX_CONCAT_SEARCH_FIELDS})
+                            WHERE CONCAT_WS ({INDEX_CONCAT_SEARCH_FIELDS})
                             LIKE '%$search%'
-                            ORDER BY $order $sort 
+                            ORDER BY $order $sort
                             LIMIT $offset, $no_of_records_per_page";
                         $count_pages = "SELECT * FROM {TABLE_NAME}
-                            WHERE CONCAT ({INDEX_CONCAT_SEARCH_FIELDS})
+                            WHERE CONCAT_WS ({INDEX_CONCAT_SEARCH_FIELDS})
                             LIKE '%$search%'
                             ORDER BY $order $sort";
                     }
@@ -140,7 +142,7 @@ $indexfile = <<<'EOT'
                                 <ul class="pagination" align-right>
                                 <?php
                                     $new_url = preg_replace('/&?pageno=[^&]*/', '', $currenturl);
-                                 ?> 
+                                 ?>
                                     <li class="page-item"><a class="page-link" href="<?php echo $new_url .'&pageno=1' ?>">First</a></li>
                                     <li class="page-item <?php if($pageno <= 1){ echo 'disabled'; } ?>">
                                         <a class="page-link" href="<?php if($pageno <= 1){ echo '#'; } else { echo $new_url ."&pageno=".($pageno - 1); } ?>">Prev</a>
@@ -189,6 +191,7 @@ $_GET["{TABLE_ID}"] = trim($_GET["{TABLE_ID}"]);
 if(isset($_GET["{TABLE_ID}"]) && !empty($_GET["{TABLE_ID}"])){
     // Include config file
     require_once "config.php";
+    require_once "helpers.php";
 
     // Prepare a select statement
     $sql = "SELECT * FROM {TABLE_NAME} WHERE {TABLE_ID} = ?";
@@ -219,7 +222,7 @@ if(isset($_GET["{TABLE_ID}"]) && !empty($_GET["{TABLE_ID}"])){
             }
 
         } else{
-            echo "Oops! Something went wrong. Please try again later.";
+            echo "Oops! Something went wrong. Please try again later.<br>".$stmt->error;
         }
     }
 
@@ -241,6 +244,7 @@ if(isset($_GET["{TABLE_ID}"]) && !empty($_GET["{TABLE_ID}"])){
     <title>View Record</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head>
+<?php require_once('navbar.php'); ?>
 <body>
     <section class="pt-5">
         <div class="container-fluid">
@@ -249,9 +253,9 @@ if(isset($_GET["{TABLE_ID}"]) && !empty($_GET["{TABLE_ID}"])){
                     <div class="page-header">
                         <h1>View Record</h1>
                     </div>
-                        
-                     {RECORDS_READ_FORM}                    
-                    
+
+                     {RECORDS_READ_FORM}
+
                     <p><a href="{TABLE_NAME}-index.php" class="btn btn-primary">Back</a></p>
                 </div>
             </div>
@@ -271,6 +275,7 @@ $deletefile = <<<'EOT'
 if(isset($_POST["{TABLE_ID}"]) && !empty($_POST["{TABLE_ID}"])){
     // Include config file
     require_once "config.php";
+    require_once "helpers.php";
 
     // Prepare a delete statement
     $sql = "DELETE FROM {TABLE_NAME} WHERE {TABLE_ID} = ?";
@@ -292,7 +297,7 @@ if(isset($_POST["{TABLE_ID}"]) && !empty($_POST["{TABLE_ID}"])){
             header("location: {TABLE_NAME}-index.php");
             exit();
         } else{
-            echo "Oops! Something went wrong. Please try again later.";
+            echo "Oops! Something went wrong. Please try again later.<br>".$stmt->error;
         }
     }
 
@@ -318,6 +323,7 @@ if(isset($_POST["{TABLE_ID}"]) && !empty($_POST["{TABLE_ID}"])){
     <title>View Record</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head>
+<?php require_once('navbar.php'); ?>
 <body>
     <section class="pt-5">
         <div class="container-fluid">
@@ -352,6 +358,7 @@ $createfile = <<<'EOT'
 <?php
 // Include config file
 require_once "config.php";
+require_once "helpers.php";
 
 // Define variables and initialize with empty values
 {CREATE_RECORDS}
@@ -359,7 +366,6 @@ require_once "config.php";
 
 // Processing form data when form is submitted
 if($_SERVER["REQUEST_METHOD"] == "POST"){
-
         {CREATE_POST_VARIABLES}
 
         $dsn = "mysql:host=$db_server;dbname=$db_name;charset=utf8mb4";
@@ -374,8 +380,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
           error_log($e->getMessage());
           exit('Something weird happened'); //something a user can understand
         }
-        $stmt = $pdo->prepare("INSERT INTO {TABLE_NAME} ({CREATE_COLUMN_NAMES}) VALUES ({CREATE_QUESTIONMARK_PARAMS})"); 
-        
+
+        $vars = parse_columns('{TABLE_NAME}', $_POST);
+        $stmt = $pdo->prepare("INSERT INTO {TABLE_NAME} ({CREATE_COLUMN_NAMES}) VALUES ({CREATE_QUESTIONMARK_PARAMS})");
+
         if($stmt->execute([ {CREATE_SQL_PARAMS}  ])) {
                 $stmt = null;
                 header("location: {TABLE_NAME}-index.php");
@@ -393,6 +401,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <title>Create Record</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head>
+<?php require_once('navbar.php'); ?>
 <body>
     <section class="pt-5">
         <div class="container-fluid">
@@ -425,6 +434,7 @@ $updatefile = <<<'EOT'
 <?php
 // Include config file
 require_once "config.php";
+require_once "helpers.php";
 
 // Define variables and initialize with empty values
 {CREATE_RECORDS}
@@ -435,31 +445,32 @@ if(isset($_POST["{COLUMN_ID}"]) && !empty($_POST["{COLUMN_ID}"])){
     // Get hidden input value
     ${COLUMN_ID} = $_POST["{COLUMN_ID}"];
 
-        // Prepare an update statement
-        
-        {CREATE_POST_VARIABLES}
+    {CREATE_POST_VARIABLES}
 
-        $dsn = "mysql:host=$db_server;dbname=$db_name;charset=utf8mb4";
-        $options = [
-          PDO::ATTR_EMULATE_PREPARES   => false, // turn off emulation mode for "real" prepared statements
-          PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, //turn on errors in the form of exceptions
-          PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, //make the default fetch be an associative array
-        ];
-        try {
-          $pdo = new PDO($dsn, $db_user, $db_password, $options);
-        } catch (Exception $e) {
-          error_log($e->getMessage());
-          exit('Something weird happened');
-        }
-        $stmt = $pdo->prepare("UPDATE {TABLE_NAME} SET {UPDATE_SQL_PARAMS} WHERE {UPDATE_SQL_ID}");
+    // Prepare an update statement
+    $dsn = "mysql:host=$db_server;dbname=$db_name;charset=utf8mb4";
+    $options = [
+        PDO::ATTR_EMULATE_PREPARES   => false, // turn off emulation mode for "real" prepared statements
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, //turn on errors in the form of exceptions
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, //make the default fetch be an associative array
+    ];
+    try {
+        $pdo = new PDO($dsn, $db_user, $db_password, $options);
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        exit('Something weird happened');
+    }
 
-        if(!$stmt->execute([ {UPDATE_SQL_COLUMNS}  ])) {
-                echo "Something went wrong. Please try again later.";
-                header("location: error.php");
-            } else{
-                $stmt = null;
-                header("location: {TABLE_NAME}-read.php?{COLUMN_ID}=${COLUMN_ID}");
-            }
+    $vars = parse_columns('{TABLE_NAME}', $_POST);
+    $stmt = $pdo->prepare("UPDATE {TABLE_NAME} SET {UPDATE_SQL_PARAMS} WHERE {UPDATE_SQL_ID}");
+
+    if(!$stmt->execute([ {UPDATE_SQL_COLUMNS}  ])) {
+        echo "Something went wrong. Please try again later.";
+        header("location: error.php");
+    } else {
+        $stmt = null;
+        header("location: {TABLE_NAME}-read.php?{COLUMN_ID}=${COLUMN_ID}");
+    }
 } else {
     // Check existence of id parameter before processing further
 	$_GET["{COLUMN_ID}"] = trim($_GET["{COLUMN_ID}"]);
@@ -500,7 +511,7 @@ if(isset($_POST["{COLUMN_ID}"]) && !empty($_POST["{COLUMN_ID}"])){
                 }
 
             } else{
-                echo "Oops! Something went wrong. Please try again later.";
+                echo "Oops! Something went wrong. Please try again later.<br>".$stmt->error;
             }
         }
 
@@ -522,6 +533,7 @@ if(isset($_POST["{COLUMN_ID}"]) && !empty($_POST["{COLUMN_ID}"])){
     <title>Update Record</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 </head>
+<?php require_once('navbar.php'); ?>
 <body>
     <section class="pt-5">
         <div class="container-fluid">
@@ -579,35 +591,50 @@ $errorfile = <<<'EOT'
 EOT;
 
 $startfile = <<<'EOT'
-
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Select CRUD pages</title>
+<html lang="en">                                                                                                                                                                                                   
+<head>                                                                                                                                                                                                             
+    <meta charset="UTF-8">                                                                                                                                                                                         
+    <title>{APP_NAME}</title>                                                                                                                                                                               
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-    <style type="text/css">
-        .page-header h2{
-            margin-top: 0;
-        }
-        table tr td:last-child a{
-            margin-right: 5px;
-        }
-    </style>
-</head>
-<body>
-<fieldset>
-<center>
-<legend>Available CRUD pages</legend>
-<div class="form-group">
-    {TABLE_BUTTONS}
-</div>
-</center>
-</fieldset>
-<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
-</body>
-</html>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+
+    <style type="text/css">                                                                                                                                                                                        
+        .page-header h2{                                                                                                                                                                                           
+            margin-top: 0;                                                                                                                                                                                         
+        }                                                                                                                                                                                                          
+        table tr td:last-child a{                                                                                                                                                                                  
+            margin-right: 5px;                                                                                                                                                                                     
+        }                                                                                                                                                                                                          
+    </style>                                                                                                                                                                                                       
+</head>                                                                                                                                                                                                            
+<?php require_once('navbar.php'); ?>
+</html>  
 EOT;
 
-?>
+$navbarfile = <<<'EOT'
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand nav-link disabled" href="#">{APP_NAME}</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Select Page
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        {TABLE_BUTTONS}                                                                                                                                                                                                     
+        <!-- TABLE_BUTTONS -->
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
+EOT;
+
+
